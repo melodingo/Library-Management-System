@@ -1,37 +1,49 @@
 <?php
-// Include the database connections
+session_start();
 $connections = include 'database.php';
+$mysqli = $connections['books'];
 
-// Access the connection to the library_management
-$mysqli2 = $connections['library_management'];
+$sql = "INSERT INTO buecher (Title, autor, nummer, kategorie, katalog, foto, zustand, Beschreibung, verfasser, verkauft, kaufer) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-// Prepare the SQL statement
-$sql = "INSERT INTO books (title, author, genre, published_date, isbn, image_url, is_borrowed) VALUES (?, ?, ?, ?, ?, ?, ?)";
+$stmt = $mysqli->prepare($sql);
 
-$stmt = $mysqli2->stmt_init();
-
-if ( ! $stmt->prepare($sql)) {
-    die("SQL error: " . $mysqli2->error);
+if (!$stmt) {
+    die("SQL-Fehler: " . $mysqli->error);
 }
 
-// Bind the parameters
-$is_borrowed = false; // Default value for new books
-$stmt->bind_param("ssssssi",
-                  $_POST["title"],
-                  $_POST["author"],
-                  $_POST["genre"],
-                  $_POST["published_date"],
-                  $_POST["isbn"],
-                  $_POST["image_url"],
-                  $is_borrowed);
+$Title = isset($_POST['Title']) ? $_POST['Title'] : '';
+$autor = isset($_POST['autor']) ? $_POST['autor'] : '';
+$nummer = isset($_POST['nummer']) ? $_POST['nummer'] : '';
+$kategorie = isset($_POST['kategorie']) ? $_POST['kategorie'] : '';
+$katalog = isset($_POST['katalog']) ? $_POST['katalog'] : '';
+$foto = isset($_POST['foto']) ? $_POST['foto'] : '';
+$zustand = isset($_POST['zustand']) ? $_POST['zustand'] : 'Neu';
+$Beschreibung = isset($_POST['Beschreibung']) ? $_POST['Beschreibung'] : '';
+$verfasser = isset($_POST['verfasser']) ? $_POST['verfasser'] : '';
+$verkauft = isset($_POST['verkauft']) ? (int)$_POST['verkauft'] : 0;
+$kaufer = isset($_POST['kaufer']) ? $_POST['kaufer'] : '';
 
-// Execute the statement
+$stmt->bind_param("sssssssssii",
+    $Title,
+    $autor,
+    $nummer,
+    $kategorie,
+    $katalog,
+    $foto,
+    $zustand,
+    $Beschreibung,
+    $verfasser,
+    $verkauft,
+    $kaufer
+);
+
 if ($stmt->execute()) {
-    echo "New book added successfully";
+    header("Location: ../pages/admin-dashboard.php?message=Buch+erfolgreich+hinzugefügt");
 } else {
-    echo "Error: " . $stmt->error;
+    header("Location: add-book.php?error=" . urlencode($stmt->error));
 }
 
 $stmt->close();
-$mysqli2->close();
-?>
+$mysqli->close();
+?>                                                             

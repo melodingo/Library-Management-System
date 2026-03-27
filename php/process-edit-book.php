@@ -1,41 +1,66 @@
-<?php
+<?php  
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Include the database connections
     $connections = include 'database.php';
+    $mysqli = $connections['books'];
 
-    // Access the connection to the library_management
-    $mysqli2 = $connections['library_management'];
+    $sql = "UPDATE buecher SET 
+            Title = ?, 
+            autor = ?, 
+            nummer = ?,
+            kategorie = ?, 
+            katalog = ?, 
+            foto = ?,
+            zustand = ?,
+            Beschreibung = ?,
+            verfasser = ?,
+            verkauft = ?,
+            kaufer = ?
+            WHERE id = ?";
 
-    // Prepare the SQL statement
-    $sql = "UPDATE books SET title = ?, author = ?, genre = ?, published_date = ?, isbn = ?, image_url = ? WHERE id = ?";
+    $stmt = $mysqli->prepare($sql);
 
-    $stmt = $mysqli2->stmt_init();
-
-    if ( ! $stmt->prepare($sql)) {
-        $error = "SQL error: " . $mysqli2->error;
+    if (!$stmt) {
+        $error = "SQL-Fehler: " . $mysqli->error;
         header("Location: edit-book.php?message=" . urlencode($error) . "&error=true");
         exit();
     }
 
-    // Bind the parameters
-    $stmt->bind_param("ssssssi",
-                      $_POST["title"],
-                      $_POST["author"],
-                      $_POST["genre"],
-                      $_POST["published_date"],
-                      $_POST["isbn"],
-                      $_POST["image_url"],
-                      $_POST["id"]);
+    $Title = isset($_POST['Title']) ? $_POST['Title'] : '';
+    $autor = isset($_POST['autor']) ? $_POST['autor'] : '';
+    $nummer = isset($_POST['nummer']) ? $_POST['nummer'] : '';
+    $kategorie = isset($_POST['kategorie']) ? $_POST['kategorie'] : '';
+    $katalog = isset($_POST['katalog']) ? $_POST['katalog'] : '';
+    $foto = isset($_POST['foto']) ? $_POST['foto'] : '';
+    $zustand = isset($_POST['zustand']) ? $_POST['zustand'] : 'Neu';
+    $Beschreibung = isset($_POST['Beschreibung']) ? $_POST['Beschreibung'] : '';
+    $verfasser = isset($_POST['verfasser']) ? $_POST['verfasser'] : '';
+    $verkauft = isset($_POST['verkauft']) ? (int)$_POST['verkauft'] : 0;
+    $kaufer = isset($_POST['kaufer']) ? $_POST['kaufer'] : '';
+    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 
-    // Execute the statement
+    $stmt->bind_param("ssssssssssii",
+        $Title,
+        $autor,
+        $nummer,
+        $kategorie,
+        $katalog,
+        $foto,
+        $zustand,
+        $Beschreibung,
+        $verfasser,
+        $verkauft,
+        $kaufer,
+        $id
+    );
+
     if ($stmt->execute()) {
-        header("Location: edit-book.php?message=" . urlencode("Book updated successfully"));
+        header("Location: edit-book.php?message=" . urlencode("Buch erfolgreich aktualisiert"));
     } else {
-        $error = "Error: " . $stmt->error;
+        $error = "Fehler beim Ausführen der Abfrage: " . $stmt->error;
         header("Location: edit-book.php?message=" . urlencode($error) . "&error=true");
     }
 
     $stmt->close();
-    $mysqli2->close();
+    $mysqli->close();
 }
 ?>

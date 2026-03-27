@@ -1,31 +1,39 @@
 <?php
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Include the database connections
-    $connections = include 'database.php';
+session_start();
+$connections = include 'database.php';
+$mysqli2 = $connections['books'];
 
-    // Access the connection to the library_management
-    $mysqli2 = $connections['library_management'];
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header("Location: edit-book.php?error=" . urlencode("Ungültige Anfrage"));
+    exit;
+}
 
-    // Prepare the SQL statement
-    $sql = "DELETE FROM books WHERE id = ?";
+if (!isset($_POST['id']) || !is_numeric($_POST['id'])) {
+    header("Location: edit-book.php?error=" . urlencode("Ungültige ID"));
+    exit;
+}
 
-    $stmt = $mysqli2->stmt_init();
+$id = (int)$_POST['id'];
+$search_title = isset($_POST['search_title']) ? $_POST['search_title'] : '';
 
-    if ( ! $stmt->prepare($sql)) {
-        die("SQL error: " . $mysqli2->error);
-    }
-
-    // Bind the parameters
-    $stmt->bind_param("i", $_POST["id"]);
-
-    // Execute the statement
+try {
+    $stmt = $mysqli2->prepare("DELETE FROM buecher WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    
     if ($stmt->execute()) {
-        echo "Book deleted successfully";
+        $_SESSION['message'] = 'Buch erfolgreich gelöscht';
+        $_SESSION['error'] = false;
+        header("Location: edit-book.php?message=" . urlencode("Buch erfolgreich gelöscht"));
     } else {
-        echo "Error: " . $stmt->error;
+        $_SESSION['message'] = 'Löschen fehlgeschlagen';
+        $_SESSION['error'] = true;
+        header("Location: edit-book.php?error=" . urlencode("Löschen fehlgeschlagen"));
     }
 
     $stmt->close();
-    $mysqli2->close();
+} catch (Exception $e) {
+    $_SESSION['message'] = 'Interner Fehler';
+    $_SESSION['error'] = true;
+    header("Location: edit-book.php?error=" . urlencode("Interner Fehler: " . $e->getMessage()));
 }
 ?>

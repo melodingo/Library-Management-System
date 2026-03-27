@@ -1,11 +1,6 @@
 <?php
 
-session_start();
+declare(strict_types=1);
 
-$_SESSION['logout_success'] = true;
-
-session_destroy();
-
-header("Location: ../index.php?message=" . urlencode("Successfully logged out"));
+header('Location: /logout');
 exit;
-?>
